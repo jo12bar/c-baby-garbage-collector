@@ -27,6 +27,7 @@ typedef enum {
  * (either an OBJ_INT or an OBJ_PAIR)
  */
 typedef struct sObject {
+	unsigned char marked;
 	ObjectType type;
 
 	union {
@@ -125,6 +126,33 @@ Object* pushPair(VM* vm) {
 
 	push(vm, obj);
 	return obj;
+}
+
+/**
+ * Mark an Object as reachable.
+ * @param {Object*} object Pointer to the Object
+ */
+void mark(Object* object) {
+	// Check to see if the object is already marked. This allows us to avoid
+	// infinite recursion loops.
+	if (object->marked) return;
+
+	object->marked = 1;
+
+	if (object->type == OBJ_PAIR) {
+		mark(object->head);
+		mark(object->tail);
+	}
+}
+
+/**
+ * Mark all reachable Object's.
+ * @param {VM*} vm Pointer to the vm
+ */
+void markAll(VM* vm) {
+	for (int i = 0; i < vm->stackSize; i++) {
+		mark(vm->stack[i]);
+	}
 }
 
 int main(int argc, const char* argv[]) {
