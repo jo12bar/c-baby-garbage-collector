@@ -30,6 +30,9 @@ typedef struct sObject {
 	unsigned char marked;
 	ObjectType type;
 
+	/** The next Object in the list of all Objects. */
+	struct sObject* next;
+
 	union {
 		/** OBJ_INT */
 		int value;
@@ -56,6 +59,9 @@ typedef struct sObject {
 typedef struct {
 	Object* stack[STACK_MAX];
 	int stackSize;
+
+	/** The first Object in the list of all Objects. */
+	Object* firstObject;
 } VM;
 
 /**
@@ -65,6 +71,7 @@ typedef struct {
 VM* newVM() {
 	VM* vm = malloc(sizeof(VM));
 	vm->stackSize = 0;
+	vm->firstObject = NULL;
 	return vm;
 }
 
@@ -98,6 +105,12 @@ Object* pop(VM* vm) {
 Object* newObject(VM* vm, ObjectType type) {
 	Object* object = malloc(sizeof(Object));
 	object->type = type;
+	object->marked = 0;
+
+	// Insert into the list of allocated Objects.
+	object->next = vm->firstObject;
+	vm->firstObject = object;
+	
 	return object;
 }
 
@@ -152,6 +165,31 @@ void mark(Object* object) {
 void markAll(VM* vm) {
 	for (int i = 0; i < vm->stackSize; i++) {
 		mark(vm->stack[i]);
+	}
+}
+
+/**
+ * Sweep through the VM's stack and delete unmarked Objects.
+ * @param {VM*} vm Pointer to the vm.
+ */
+void sweep(VM* vm) {
+	Object** object = &vm->firstObject;
+
+	while (*object) {
+		if (!(*object)->marked) {
+			// This object wasn't reached, so remove it from the
+			// list and free it.
+			Object* unreached = *object;
+
+			*object = unreached->next;
+			free(unreached);
+		}
+		else {
+			// This Object was reached, so unmark it (for the next GC) and move
+			// on to the next.
+			(*object)->marked = 0;
+			object = &(*object)->next;
+		}
 	}
 }
 
