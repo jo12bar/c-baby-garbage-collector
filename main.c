@@ -1,6 +1,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+/** Maximum size of the VM stack. */
+#define STACK_MAX 256
+
+/** How many Objects to allocate before running GC. */
+#define INITIAL_GC_THRESHOLD 8
+
 void assert(int condition, const char* message) {
 	if (!condition) {
 		printf("%s\n", message);
@@ -52,9 +58,6 @@ typedef struct sObject {
  * middle of an expression.
  */
 
-/** Maximum size of the VM stack. */
-#define STACK_MAX 256
-
 /** A simple virtual machine for managing out-of-scope variables. */
 typedef struct {
 	Object* stack[STACK_MAX];
@@ -62,6 +65,12 @@ typedef struct {
 
 	/** The first Object in the list of all Objects. */
 	Object* firstObject;
+
+	/** Total number of currently allocated Objects. */
+	int numObjects;
+
+	/** Number of objects required to trigger a garbage collection. */
+	int maxObjects;
 } VM;
 
 /**
@@ -72,6 +81,8 @@ VM* newVM() {
 	VM* vm = malloc(sizeof(VM));
 	vm->stackSize = 0;
 	vm->firstObject = NULL;
+	vm->numObjects = 0;
+	vm->maxObjects = INITIAL_GC_THRESHOLD;
 	return vm;
 }
 
@@ -103,6 +114,9 @@ Object* pop(VM* vm) {
  * @return A pointer to the instantiated Object.
  */
 Object* newObject(VM* vm, ObjectType type) {
+	// Run GC if we're reaching max number of Objects.
+	if (vm->numObjects == vm->maxObjects) gc(vm);
+
 	Object* object = malloc(sizeof(Object));
 	object->type = type;
 	object->marked = 0;
@@ -111,6 +125,7 @@ Object* newObject(VM* vm, ObjectType type) {
 	object->next = vm->firstObject;
 	vm->firstObject = object;
 	
+	vm->numObjects++;
 	return object;
 }
 
@@ -183,6 +198,8 @@ void sweep(VM* vm) {
 
 			*object = unreached->next;
 			free(unreached);
+
+			vm->numObjects--;
 		}
 		else {
 			// This Object was reached, so unmark it (for the next GC) and move
@@ -191,6 +208,19 @@ void sweep(VM* vm) {
 			object = &(*object)->next;
 		}
 	}
+}
+
+/**
+ * Run the garbage collector.
+ * @param {VM*} vm Pointer to the VM
+ */
+void gc(VM* vm) {
+	int numObjects = vm->numObjects;
+
+	markAll(vm);
+	sweep(vm);
+
+	vm->maxObjects = vm->numObjects * 2;
 }
 
 int main(int argc, const char* argv[]) {
