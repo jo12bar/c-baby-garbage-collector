@@ -1,3 +1,13 @@
+#include <stdlib.h>
+#include <stdio.h>
+
+void assert(int condition, const char* message) {
+	if (!condition) {
+		printf("%s\n", message);
+		exit(1);
+	}
+}
+
 /**
  * We need to get some "preliminaries" out of the way first. We need stuff to
  * actually garbage-collect! Normally, this would be done through super-fancy
@@ -77,3 +87,6 @@ Object* pop(VM* vm) {
 	return vm->stack[--vm->stackSize];
 }
 
+int main(int argc, const char* argv[]) {
+	return 0;
+}
