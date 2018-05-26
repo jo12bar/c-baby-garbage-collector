@@ -87,6 +87,46 @@ Object* pop(VM* vm) {
 	return vm->stack[--vm->stackSize];
 }
 
+/**
+ * Instantiate a new Object.
+ * @param {VM*} vm Pointer to a vm
+ * @param {ObjectType} type The type of the object (either an OBJ_INT or
+ *                          an OBJ_PAIR)
+ * @return A pointer to the instantiated Object.
+ */
+Object* newObject(VM* vm, ObjectType type) {
+	Object* object = malloc(sizeof(Object));
+	object->type = type;
+	return object;
+}
+
+/**
+ * Push a new int Object to the VM's stack.
+ * @param {VM*} vm Pointer to a vm
+ * @param {int} val The value of the int Object
+ */
+void pushInt(VM* vm, int val) {
+	Object* obj = newObject(vm, OBJ_INT);
+	obj->value = val;
+	push(vm, obj);
+}
+
+/**
+ * Instantiate and push a new pair Object to the VM's stack.
+ * The pair's tail will be the top object on the stack, and it's head will be
+ * the object on the stack just underneath that.
+ * @param {VM*} vm A pointer to a vm
+ * @return The newly instantiated Object.
+ */
+Object* pushPair(VM* vm) {
+	Object* obj = newObject(vm, OBJ_PAIR);
+	obj->tail = pop(vm);
+	obj->head = pop(vm);
+
+	push(vm, obj);
+	return obj;
+}
+
 int main(int argc, const char* argv[]) {
 	return 0;
 }
