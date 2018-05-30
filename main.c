@@ -223,6 +223,16 @@ void gc(VM* vm) {
 	vm->maxObjects = vm->numObjects * 2;
 }
 
+/**
+ * Free the VM from memory.
+ * @param {VM*} vm Pointer to the VM.
+ */
+void freeVM(VM* vm) {
+	vm->stackSize = 0;
+	gc(vm);
+	free(vm);
+}
+
 int main(int argc, const char* argv[]) {
 	return 0;
 }
