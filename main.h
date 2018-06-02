@@ -7,8 +7,6 @@
 /** How many Objects to allocate before running GC. */
 #define INITIAL_GC_THRESHOLD 8
 
-void assert(int condition, const char* message);
-
 /*********|
 | OBJECTS |
 |*********/
@@ -79,5 +77,12 @@ void mark(Object* object);
 void markAll(VM* vm);
 void sweep(VM* vm);
 void gc(VM* vm);
+
+/***************************|
+| UTILITY FUNCTIONS & TESTS |
+|***************************/
+
+void assert(int condition, const char* message);
+void objectPrint(Object* obj);
 
 #endif

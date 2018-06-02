@@ -196,6 +196,26 @@ void freeVM(VM* vm) {
 	free(vm);
 }
 
+/**
+ * Print the contents of an Cbject to stdout.
+ * @param {Object*} obj The Object.
+ */
+void objectPrint(Object* obj) {
+	switch (obj->type) {
+		case OBJ_INT:
+			printf("%d", obj->value);
+			break;
+
+		case OBJ_PAIR:
+			printf("(");
+			objectPrint(obj->head);
+			printf(", ");
+			objectPrint(obj->tail);
+			printf(")");
+			break;
+	}
+}
+
 int main(int argc, const char* argv[]) {
 	return 0;
 }
